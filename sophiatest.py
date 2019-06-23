@@ -45,10 +45,12 @@ async def on_ready():
 @client.event
 async def on_command_error(ctx, error):
 	x = ""
+	x = str(error).upper().split()
+	print("x is " + x)
 	if isinstance(error, commands.BadArgument):
 		print("bad argument")
 	elif isinstance(error, Exception):
-		x = str(error).upper().split()
+		print("x: " + x)
 		if "ValueError:".upper() in x:
 			embedInvalid = discord.Embed(title="Command cancelled. You did not type a number.", color=0xee2002)
 		elif "TimeoutError:".upper() in x:
@@ -63,6 +65,7 @@ async def on_command_error(ctx, error):
 	else:
 		print("idk")
 		embedInvalid = discord.Embed(title="Command Error. Type *{}help* for help.".format(oldprefixdata.get(str(ctx.guild.id))), color=0xee2002)
+		#await ctx.send(embed=embedInvalid)
 
 
 
@@ -108,6 +111,7 @@ async def hero(ctx, *, name):
 				embed.add_field(name=hero['s1 name'] + ' [max] - ' + hero['s1 cdr'], value=hero['s1 max'] , inline=False)
 				embed.add_field(name=hero['s2 name'] + ' - ' + hero['s2 cdr'], value=hero['s2'], inline=False)
 				embed.add_field(name=hero['s2 name'] + ' [max] - ' + hero['s2 cdr'], value=hero['s2 max'] , inline=False)
+				embed.add_field(name=hero['grimoire name'], value=hero['grimoire skill'], inline=False)
 				#embed.set_footer(text="coded by TheKyt aka Crazed Gorilla7")
 				#await self.bot.say(embed=embed)
 
@@ -373,7 +377,7 @@ async def listall(ctx):
 							index+=1
 
 						embed = discord.Embed(title="Search results based on \"*" +userInput.upper() + "*\" rarity:\n  Type `{}hr Riah` for more info on hero.".format(oldprefixdata.get(str(ctx.guild.id))), description=descString, color=0x00ff00)
-						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + ".")
+						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + " (" + str(len(matchedHeroList)) + " entries).")
 
 						print("HELLO4")
 						#EDIT MESSAGE FROM EARLIER
@@ -396,6 +400,8 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error2")
+				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				await ctx.send(embed=embedInvalid)
 
 		#ELEMENT TYPE SEARCH
 		if searchInput.lower() in typeSearch:
@@ -455,7 +461,7 @@ async def listall(ctx):
 							index+=1
 
 						embed = discord.Embed(title="Search results based on \"*" +userInput.upper() + "*\" element:\n  Type `{}hr Riah` for more info on hero.".format(oldprefixdata.get(str(ctx.guild.id))), description=descString, color=0x00ff00)
-						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + ".")
+						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + " (" + str(len(matchedHeroList)) + " entries).")
 
 						print("HELLO4")
 						#EDIT MESSAGE FROM EARLIER
@@ -478,6 +484,8 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error8")
+				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				await ctx.send(embed=embedInvalid)
 
 		#LEADER SEARCH
 		if searchInput.lower() in leaderSearch:
@@ -547,7 +555,7 @@ async def listall(ctx):
 						print("Index at 1: " + str(index))
 						print("HELLO2")
 						embed = discord.Embed(title="Search results based on \"*" +userInput.upper() + "*\":", description="", color=0x00ff00)
-						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + ".")
+						embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + " (" + str(len(matchedLeaderList)) + " entries).")
 						if pageIndex == totalPages:
 							resultsInPage = len(matchedLeaderList) % setResultsPerPage
 						else:
@@ -576,9 +584,14 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error100")
+				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				await ctx.send(embed=embedInvalid)
 
 	except ValueError:
-		print("searchInput error")
+		print("searchInput error 1")
+		embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+		await ctx.send(embed=embedInvalid)
+		print("searchInput error 2")
 
 
 #CREDIT
