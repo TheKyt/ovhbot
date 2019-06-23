@@ -40,7 +40,7 @@ with open('db.json') as hero_db:
 async def on_ready():
 	print('Bot is ready.')
 
-'''
+
 #COMMAND ERROR
 @client.event
 async def on_command_error(ctx, error):
@@ -63,7 +63,7 @@ async def on_command_error(ctx, error):
 	else:
 		print("idk")
 		embedInvalid = discord.Embed(title="Command Error. Type *{}help* for help.".format(oldprefixdata.get(str(ctx.guild.id))), color=0xee2002)
-'''
+
 
 
 #HELP COMMAND
@@ -74,7 +74,7 @@ async def help(ctx):
 	embed.add_field(name="grimoire (grim, gr)", value="returns grimoire of specified hero (e.g. `{}gr Riah`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 	embed.add_field(name="list", value="returns a list of hero names based on leader skill, element type or rarity (e.g. `{}list`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 	embed.add_field(name="leader (ldr)", value="returns leader skill of specified hero (e.g. `{}ldr Riah`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
-	embed.add_field(name="search", value="returns results based on userInput (e.g. `{}search *userInput*`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+	embed.add_field(name="search - FUTURE FEATURE", value="returns results based on userInput (e.g. `{}search *userInput*`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 
 
 	await ctx.send(embed=embed)
@@ -102,18 +102,15 @@ async def hero(ctx, *, name):
 		y = 0
 		for hero in data:
 			if name.upper() == hero['name'].upper():
-				reply = (f'```css\n.' +
-							hero['name'] + ' - ' + hero['rarity'] + ' ' + hero['attribute'] + ' ' + hero['class type'] + '\n' +
-							hero['leader name'] + ' - ' + hero['leader skill'] +
-							'\n\n.S1 ' + hero['s1 name'] + ' - ' + hero['s1 cdr'] +
-							' cd\n' + hero['s1'] +
-							'\n\n.MAX\n' +
-							hero['s1 max'] +
-							'\n\n.S2 ' + hero['s2 name'] +' - ' + hero['s2 cdr'] +
-							' cd\n' + hero['s2'] +
-							'\n\n.MAX\n' +
-							hero['s2 max'] +
-							'\n```')
+				embed=discord.Embed(title=hero['name'], description=hero['rarity'] + ' ' + hero['attribute'] + ' ' + hero['class type'])
+				embed.add_field(name=hero['leader name'], value=hero['leader skill'], inline=False)
+				embed.add_field(name=hero['s1 name'] + ' - ' + hero['s1 cdr'], value=hero['s1'], inline=False)
+				embed.add_field(name=hero['s1 name'] + ' [max] - ' + hero['s1 cdr'], value=hero['s1 max'] , inline=False)
+				embed.add_field(name=hero['s2 name'] + ' - ' + hero['s2 cdr'], value=hero['s2'], inline=False)
+				embed.add_field(name=hero['s2 name'] + ' [max] - ' + hero['s2 cdr'], value=hero['s2 max'] , inline=False)
+				#embed.set_footer(text="coded by TheKyt aka Crazed Gorilla7")
+				#await self.bot.say(embed=embed)
+
 				break
 			else:
 				test = SequenceMatcher(None, name.upper(), hero['name'].upper()).ratio()
@@ -133,10 +130,10 @@ async def hero(ctx, *, name):
 					y = 1
 
 				if y == 1:
-					reply = (f'Could not find ' + '***' + name + '***' + '. Try ' + comparedHero + '.')
+					embed=discord.Embed(title="Could not find " + + '***' + name + '***' + '. Try ' + comparedHero + '.', color=0xee2002)
 				else:
-					reply = (f'Could not find ' + '***' + name + '***' + '. Do you mean ' + '***' + comparedHero + '***' + '?')
-		await ctx.send(reply)
+					embed=discord.Embed(title='Could not find ' + '***' + name + '***' + '. Do you mean ' + '***' + comparedHero + '***' + '?', color=0xee2002)
+		await ctx.send(embed=embed)
 
 #GRIMOIRE
 @client.command(aliases = ['gr', 'grimoire'])
@@ -146,11 +143,9 @@ async def grim(ctx, *, name):
 		y = 0
 		for hero in data:
 			if name.upper() == hero['name'].upper():
-				reply = (f'```css\n.' +
-							hero['name'] + ' - ' + hero['grimoire item'] +
-							'\nSkill: ' + hero['grimoire name'] + ' ' +
-							'\n' + hero['grimoire skill'] +
-							'\n```')
+				embed=discord.Embed(title=hero['name'] + "\'s " + hero['grimoire item'], description="Grimoire")
+				embed.add_field(name=hero['grimoire name'], value=hero['grimoire skill'], inline=False)
+				#embed.set_footer(text="coded by TheKyt aka Crazed Gorilla7")
 				break
 			else:
 				test = SequenceMatcher(None, name.upper(), hero['name'].upper()).ratio()
@@ -170,12 +165,13 @@ async def grim(ctx, *, name):
 					y = 1
 
 				if y == 1:
-					reply = (f'Could not find ' + '***' + name + '***' + '\'s grimoire.' + '. Try ' + comparedHero + '.')
+					embed=discord.Embed(title="Could not find " + + '***' + name + '***' + '. Try ' + comparedHero + '.', color=0xee2002)
 				else:
-					reply = (f'Could not find ' + '***' + name + '***' + '\'s grimoire.' + '. Do you mean ' + '***' + comparedHero + '***' + '?')
-		await ctx.send(reply)
+					embed=discord.Embed(title='Could not find ' + '***' + name + '***' + '. Do you mean ' + '***' + comparedHero + '***' + '?', color=0xee2002)
+		await ctx.send(embed=embed)
 
-#LISTALL BASED ON RARITY OR ELEMENT
+'''
+#SEARCH FOR RANDOM KEYWORD
 @client.command()
 async def search(ctx, *, searchInput):
 	index = 0
@@ -190,16 +186,8 @@ async def search(ctx, *, searchInput):
 	raritySearchKeywords = ("UR", "SSR", "SR")
 	descString = ""
 	setResultsPerPage = 15
-	#RARITY SEARCH
-	#LIST OUT RARITY
-		#HELP SEARCH
-	if searchInput.lower() in helpSearch:
-		print(oldprefixdata.get(str(ctx.guild.id)))
-		embedHelp=discord.Embed(title="Search Directory", description="Commands - Server Prefix: `{}`".format(oldprefixdata.get(str(ctx.guild.id))))
-		embedHelp.add_field(name="leader (ldr)", value="returns list of keywords for leader skills to search (e.g. `{}search ldr`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
-		embedHelp.add_field(name="element (ele)", value="returns list of elements to search (e.g. `{}search ele`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 
-		await ctx.send(embed=embedHelp)
+'''
 
 
 
@@ -247,10 +235,9 @@ async def leader(ctx, *, name):
 	y = 0
 	for hero in data:
 		if name.upper() == hero['name'].upper():
-			reply = (f'```css\n.' +
-						hero['name'] + ' - ' +
-						hero['leader name'] + '\n' + hero['leader skill'] +
-						'\n```')
+			embed=discord.Embed(title=hero['name'], description="Leader Skill")
+			embed.add_field(name=hero['leader name'], value=hero['leader skill'], inline=False)
+			#embed.set_footer(text="coded by TheKyt aka Crazed Gorilla7")
 			break
 		else:
 			test = SequenceMatcher(None, name.upper(), hero['name'].upper()).ratio()
@@ -270,10 +257,10 @@ async def leader(ctx, *, name):
 				y = 1
 
 			if y == 1:
-				reply = (f'Could not find ' + '***' + name + '***' + '. Try ' + comparedHero + '.')
+				embed=discord.Embed(title="Could not find " + + '***' + name + '***' + '. Try ' + comparedHero + '.', color=0xee2002)
 			else:
-				reply = (f'Could not find ' + '***' + name + '***' + '. Do you mean ' + '***' + comparedHero + '***' + '?')
-	await ctx.send(reply)
+				embed=discord.Embed(title='Could not find ' + '***' + name + '***' + '. Do you mean ' + '***' + comparedHero + '***' + '?', color=0xee2002)
+	await ctx.send(embed=embed)
 
 #LIST COMMAND
 @client.command(aliases=['list'])
@@ -298,12 +285,13 @@ async def listall(ctx):
 	setResultsPerPage = 0
 	searchInput = ""
 	userSelectionInput = 0
+	chosenKeyword = 0
 
 	#DISPLAY OUT
 	embedSelectionList=discord.Embed(title="List Directory", description="Commands - Server Prefix: `{}`".format(oldprefixdata.get(str(ctx.guild.id))), color=0x00ff00)
 	embedSelectionList.add_field(name="1. leader (ldr)", value="returns list of leader skills keywords to search (e.g. `{}search ldr`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 	embedSelectionList.add_field(name="2. element (ele)", value="returns list of elements to search (e.g. `{}search ele`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
-	embedSelectionList.add_field(name="3. rarirty (rar)", value="returns list rarities to search (e.g. `{}search ele`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+	embedSelectionList.add_field(name="3. rarity (rar)", value="returns list rarities to search (e.g. `{}search ele`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
 
 	botMsg = await ctx.send(embed=embedSelectionList)
 
