@@ -69,7 +69,15 @@ async def on_command_error(ctx, error):
 #HELP COMMAND
 @client.command()
 async def help(ctx):
-	await ctx.send('```\nCommands:\n\nhero (e.g. {prefix}hero young gleck)\ngrimoire (e.g. {prefix}grimoire ludmila)\nprefix (change prefix)\nleader (e.g. {prefix}leader)\ncredits\n\nAbbreviations:\nhr (hero)\ngr (grimoire)\nldr (leader)\n```')
+	embed=discord.Embed(title="Help Directory", description="Commands - Server Prefix: `{}`".format(oldprefixdata.get(str(ctx.guild.id))))
+	embed.add_field(name="hero (hr)", value="returns profile of specified hero (e.g. `{}hr Riah`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+	embed.add_field(name="grimoire (grim, gr)", value="returns grimoire of specified hero (e.g. `{}gr Riah`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+	embed.add_field(name="listall (list)", value="returns a list of hero names based on rarity (e.g. `{}list`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+	embed.add_field(name="leader (ldr)", value="returns leader skill of specified hero", inline=False)
+	embed.add_field(name="search help | element (ele) | leader (ldr)", value="returns hero names of selected element or leader skill (e.g. `{}search help`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+
+
+	await ctx.send(embed=embed)
 
 #PREFIX CHANGE
 #ctx.guild.id in a command or message.guild.id in an event
@@ -86,7 +94,7 @@ async def prefix(ctx, *, prefixsymbol):
 	#else:
 	#    await ctx.send('Only mods can set prefix!')
 
-#SKILLS
+#HERO PROFILE
 @client.command(aliases = ['hr'])
 async def hero(ctx, *, name):
 		comparedHero = ""
@@ -168,29 +176,104 @@ async def grim(ctx, *, name):
 		await ctx.send(reply)
 
 #SEARCH BY RARITY
-@client.command(aliases=['rar'])
-async def rarity(ctx, *, rarityInput):
-	listofheroes = ""
-	y = 0
-	x = 0
-	for hero in data:
-		if rarityInput.upper() == hero['rarity'].upper():
-			x = x + 1
+@client.command(aliases=['list'])
+async def listall(ctx):
+	index = 0
+	msg = ''
+	res = None
+	matchedLeaderList = list()
+	matchedLeaderListSkills = list()
+	matchedHeroList = list()
+	userInput = ""
+	totalPages = 0
+	pageIndex = 1
+	raritySearchKeywords = ("UR", "SSR", "SR")
+	descString = ""
+	setResultsPerPage = 15
+	#RARITY SEARCH
+	#LIST OUT RARITY
+	embedList = discord.Embed(title="Type a number from `1-" + str(len(raritySearchKeywords)) + "` \n    e.g. `1` to view UR list", description=listKeywords(raritySearchKeywords, index), color=0x00ff00)
 
-			if data.index(hero) == len(data)-1 and x > 1:
-				listofheroes = listofheroes + ' and '
-			elif data.index(hero) < len(data) and x > 1:
-				listofheroes = listofheroes + ', '
+	botMsg = await ctx.send(embed=embedList)
+	#while True:
+	msg = await client.wait_for('message', check=check(ctx.author), timeout=30)
 
-			listofheroes = listofheroes + '**' + hero['name'] + '**'
-		elif data.index(hero) == len(data)-1 and x == 0:
-			y = 1
+	try:
+		chosenKeyword = int(msg.content)
+	except ValueError:
+		print("value error2")
 
-	if y == 1:
-		reply = ('Please type **SR** or **SSR**.')
+	chosenKeyword = int(msg.content)
+	if chosenKeyword >= 1 and chosenKeyword <= 3:
+		if chosenKeyword == 1: #chose Attack Increase
+			userInput = "UR"
+		elif chosenKeyword == 2:
+			userInput = "SSR"
+		elif chosenKeyword == 3:
+			userInput = "SR"
+		else:
+			userInput = False
+		print(userInput)
+		print(chosenKeyword)
+		#delete the response user typed
+		await msg.delete()
+
+		#CREATE NEW LIST OF MATCHES
+		for hero in data:
+			if userInput.upper() == hero['rarity'].upper():
+				matchedHeroList.append(hero['name'])
+				print(matchedHeroList)
+
+		matchedHeroList.sort()
+		print(matchedHeroList)
+		#print(matchedLeaderListSkills2)
+		#SEND OUT MATCHED LIST BASED ON SELECTION
+		while True:
+			maxResultsPerPage = 0
+			print("HELLO")
+			totalPages = math.ceil(len(matchedHeroList)/setResultsPerPage)
+			l = pageIndex != 1
+			r = pageIndex != totalPages
+
+			if pageIndex == 1:
+				index = 0
+			else:
+				index = (pageIndex-1) * setResultsPerPage
+			print("Index at 1: " + str(index))
+			print("HELLO2")
+
+			if pageIndex == totalPages:
+				resultsInPage = len(matchedHeroList) % setResultsPerPage
+			else:
+				resultsInPage = setResultsPerPage
+
+			while maxResultsPerPage < resultsInPage:
+				descString = descString + "\n**" + str(index+1) + "** - " + matchedHeroList[index]
+				maxResultsPerPage+=1
+				index+=1
+
+			embed = discord.Embed(title="Search results based on \"*" +userInput.upper() + "*\" rarity:\n  Type `{}hr Riah` for more info on hero.".format(oldprefixdata.get(str(ctx.guild.id))), description=descString, color=0x00ff00)
+			embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + ".")
+
+			print("HELLO4")
+			#EDIT MESSAGE FROM EARLIER
+			await botMsg.edit(embed=embed)
+			descString = ""
+			await botMsg.add_reaction(left)
+			await botMsg.add_reaction(right)
+			react, user = await client.wait_for('reaction_add', check=predicate(botMsg, l, r))
+			await botMsg.remove_reaction(react.emoji, user)
+			print("user: " + str(user))
+			print("ctx.author: " + str(ctx.author))
+			if str(ctx.author) == str(user):
+				if react.emoji == left:
+					pageIndex -= 1
+				elif react.emoji == right:
+					pageIndex += 1
+
 	else:
-		reply = (f'List of ' + rarityInput + ' heroes include: ') + listofheroes + '.'
-	await ctx.send(reply)
+		embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + str(len(raritySearchKeywords)) + "`. \n    e.g. `1` to view UR list", color=0xee2002)
+		await ctx.send(embed=embedInvalid)
 
 
 def predicate(message, l, r):
@@ -290,13 +373,16 @@ async def search(ctx, *, searchInput):
 	#HELP SEARCH
 	if searchInput.lower() in helpSearch:
 		print(oldprefixdata.get(str(ctx.guild.id)))
-		embedHelp = discord.Embed(title="{}search leader".format(oldprefixdata.get(str(ctx.guild.id))), description="list", color=0x00ff00)
+		embedHelp=discord.Embed(title="Search Directory", description="Commands - Server Prefix: `{}`".format(oldprefixdata.get(str(ctx.guild.id))))
+		embedHelp.add_field(name="leader (ldr)", value="returns list of keywords for leader skills to search (e.g. `{}search ldr`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+		embedHelp.add_field(name="element (ele)", value="returns list of elements to search (e.g. `{}search ele`)".format(oldprefixdata.get(str(ctx.guild.id))), inline=False)
+
 		await ctx.send(embed=embedHelp)
 
 	#ELEMENT TYPE SEARCH
 	if searchInput.lower() in typeSearch:
 		setResultsPerPage = 15
-		embedList = discord.Embed(title="Type a number from `1-" + str(len(typeSearchKeywords)) + "`", description=listKeywords(typeSearchKeywords, index), color=0x00ff00)
+		embedList = discord.Embed(title="Type a number from `1-" + str(len(typeSearchKeywords)) + "` \n    e.g. `1` to view Fire list", description=listKeywords(typeSearchKeywords, index), color=0x00ff00)
 
 		botMsg = await ctx.send(embed=embedList)
 		msg = await client.wait_for('message', check=check(ctx.author), timeout=30)
@@ -372,103 +458,18 @@ async def search(ctx, *, searchInput):
 						pageIndex += 1
 
 		else:
-			embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + len(typeSearchKeywords) + "`.", color=0xee2002)
+			embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + str(len(typeSearchKeywords)) + "`. \n    e.g. `1` to view Fire list", color=0xee2002)
 			await ctx.send(embed=embedInvalid)
 
 
-	#RARITY SEARCH
-	if searchInput.lower() in raritySearch:
-		#LIST OUT RARITY
-		setResultsPerPage = 15
-		embedList = discord.Embed(title="Type a number from `1-3`", description=listKeywords(raritySearchKeywords, index), color=0x00ff00)
 
-		botMsg = await ctx.send(embed=embedList)
-		#while True:
-		msg = await client.wait_for('message', check=check(ctx.author), timeout=30)
-
-		try:
-			chosenKeyword = int(msg.content)
-		except ValueError:
-			print("value error2")
-
-		chosenKeyword = int(msg.content)
-		if chosenKeyword >= 1 and chosenKeyword <= 3:
-			if chosenKeyword == 1: #chose Attack Increase
-				userInput = "UR"
-			elif chosenKeyword == 2:
-				userInput = "SSR"
-			elif chosenKeyword == 3:
-				userInput = "SR"
-			else:
-				userInput = False
-			print(userInput)
-			print(chosenKeyword)
-			#delete the response user typed
-			await msg.delete()
-
-			#CREATE NEW LIST OF MATCHES
-			for hero in data:
-				if userInput.upper() == hero['rarity'].upper():
-					matchedHeroList.append(hero['name'])
-					print(matchedHeroList)
-
-			matchedHeroList.sort()
-			print(matchedHeroList)
-			#print(matchedLeaderListSkills2)
-			#SEND OUT MATCHED LIST BASED ON SELECTION
-			while True:
-				maxResultsPerPage = 0
-				print("HELLO")
-				totalPages = math.ceil(len(matchedHeroList)/setResultsPerPage)
-				l = pageIndex != 1
-				r = pageIndex != totalPages
-
-				if pageIndex == 1:
-					index = 0
-				else:
-					index = (pageIndex-1) * setResultsPerPage
-				print("Index at 1: " + str(index))
-				print("HELLO2")
-
-				if pageIndex == totalPages:
-					resultsInPage = len(matchedHeroList) % setResultsPerPage
-				else:
-					resultsInPage = setResultsPerPage
-
-				while maxResultsPerPage < resultsInPage:
-					descString = descString + "\n**" + str(index+1) + "** - " + matchedHeroList[index]
-					maxResultsPerPage+=1
-					index+=1
-
-				embed = discord.Embed(title="Search results based on \"*" +userInput.upper() + "*\" element:\n  Type `{}hr Riah` for more info on hero.".format(oldprefixdata.get(str(ctx.guild.id))), description=descString, color=0x00ff00)
-				embed.set_footer(text="Page " + str(pageIndex) + " of " + str(totalPages) + ".")
-
-				print("HELLO4")
-				#EDIT MESSAGE FROM EARLIER
-				await botMsg.edit(embed=embed)
-				descString = ""
-				await botMsg.add_reaction(left)
-				await botMsg.add_reaction(right)
-				react, user = await client.wait_for('reaction_add', check=predicate(botMsg, l, r))
-				await botMsg.remove_reaction(react.emoji, user)
-				print("user: " + str(user))
-				print("ctx.author: " + str(ctx.author))
-				if str(ctx.author) == str(user):
-					if react.emoji == left:
-						pageIndex -= 1
-					elif react.emoji == right:
-						pageIndex += 1
-
-		else:
-			embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + len(matchedHeroList) + "`.", color=0xee2002)
-			await ctx.send(embed=embedInvalid)
 
 
 	#LEADER SEARCH
 	if searchInput.lower() in leaderSearch:
 		#LIST OUT POSSIBLE LEADERSKILL KEYWORDS
 		setResultsPerPage = 5
-		embedList = discord.Embed(title="Type a number from `1-10`", description=listKeywords(ldrSKillsKeywords, index), color=0x00ff00)
+		embedList = discord.Embed(title="Type a number from `1-10` \n    e.g. `1` to view Attack list", description=listKeywords(ldrSKillsKeywords, index), color=0x00ff00)
 
 		botMsg = await ctx.send(embed=embedList)
 		#while True:
@@ -561,7 +562,7 @@ async def search(ctx, *, searchInput):
 					elif react.emoji == right:
 						pageIndex += 1
 		else:
-			embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + len(chosenKeyword) + "`.", color=0xee2002)
+			embedInvalid = discord.Embed(title="Invalid Command. Please type a number from `1 -" + str(len(ldrSKillsKeywords)) + "`. \n    e.g. `1` to view Attack list", color=0xee2002)
 			await ctx.send(embed=embedInvalid)
 
 
