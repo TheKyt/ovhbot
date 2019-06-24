@@ -18,7 +18,7 @@ right = '⏩'
 #OPEN PREFIX FILE
 with open('prefixes.json') as server_prefix:
 	oldprefixdata = json.load(server_prefix)
-default_prefix = "$"
+default_prefix = "ovh!"
 
 #SEARCH FOR SERVER PREFIX
 def prefix(bot, message):
@@ -40,17 +40,26 @@ with open('db.json') as hero_db:
 async def on_ready():
 	print('Bot is ready.')
 
+#set prefix to default when client joins
+@client.event
+async def on_guild_join(guild):
+	#if ctx.message.author.guild_permissions.manage_server:
+	print(str(guild.id))
+	newSymbol = {str(guild.id): "ovh!"}
+	oldprefixdata.update(newSymbol)
+	with open('prefixes.json', 'w') as someData:
+		json.dump(oldprefixdata, someData)
 
 #COMMAND ERROR
 @client.event
 async def on_command_error(ctx, error):
 	x = ""
 	x = str(error).upper().split()
-	print("x is " + x)
+	print("x is " + str(x))
 	if isinstance(error, commands.BadArgument):
 		print("bad argument")
 	elif isinstance(error, Exception):
-		print("x: " + x)
+		print("x: " + str(x))
 		if "ValueError:".upper() in x:
 			embedInvalid = discord.Embed(title="Command cancelled. You did not type a number.", color=0xee2002)
 		elif "TimeoutError:".upper() in x:
@@ -106,11 +115,19 @@ async def hero(ctx, *, name):
 		for hero in data:
 			if name.upper() == hero['name'].upper():
 				embed=discord.Embed(title=hero['name'], description=hero['rarity'] + ' ' + hero['attribute'] + ' ' + hero['class type'], color=0x8486d7)
+
+				embed.add_field(name="------------------------------------------------------------------------------------------------------------", value="Leader Skill", inline=False)
 				embed.add_field(name=hero['leader name'], value=hero['leader skill'], inline=False)
+
+				embed.add_field(name="------------------------------------------------------------------------------------------------------------", value="Skills", inline=False)
 				embed.add_field(name=hero['s1 name'] + ' - ' + hero['s1 cdr'], value=hero['s1'], inline=False)
 				embed.add_field(name=hero['s1 name'] + ' [max] - ' + hero['s1 cdr'], value=hero['s1 max'] , inline=False)
+
+				#embed.add_field(name="\"\"\"\"\"\"\"\"\"\"", value="S2", inline=False)
 				embed.add_field(name=hero['s2 name'] + ' - ' + hero['s2 cdr'], value=hero['s2'], inline=False)
 				embed.add_field(name=hero['s2 name'] + ' [max] - ' + hero['s2 cdr'], value=hero['s2 max'] , inline=False)
+
+				embed.add_field(name="------------------------------------------------------------------------------------------------------------", value="Grimoire", inline=False)
 				embed.add_field(name=hero['grimoire name'], value=hero['grimoire skill'], inline=False)
 				#embed.set_footer(text="coded by TheKyt aka Crazed Gorilla7")
 				#await self.bot.say(embed=embed)
@@ -400,7 +417,7 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error2")
-				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				#embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
 				await ctx.send(embed=embedInvalid)
 
 		#ELEMENT TYPE SEARCH
@@ -484,7 +501,7 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error8")
-				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				#embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
 				await ctx.send(embed=embedInvalid)
 
 		#LEADER SEARCH
@@ -584,14 +601,14 @@ async def listall(ctx):
 					await ctx.send(embed=embedInvalid)
 			except ValueError:
 				print("value error100")
-				embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+				#embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
 				await ctx.send(embed=embedInvalid)
 
 	except ValueError:
 		print("searchInput error 1")
-		embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
+		#embedInvalid = discord.Embed(title="You did not type a number!", color=0xee2002)
 		await ctx.send(embed=embedInvalid)
-		print("searchInput error 2")
+		#print("searchInput error 2")
 
 
 #CREDIT
